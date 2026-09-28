@@ -1,0 +1,202 @@
+---
+title: "Day 8: Feature Engineering — In-Class Activity"
+subtitle: "What predicts a wage?"
+author: "Econ 122"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r packages, include=FALSE, eval=TRUE}
+mypacks <- c("ggplot2","dplyr","readr","tidyr","ISLR2")
+packs <- installed.packages()
+install.me <- mypacks[!(mypacks %in% packs[,"Package"])]
+if (length(install.me) >= 1) install.packages(install.me, repos = "http://cran.us.r-project.org")
+lapply(mypacks, library, character.only=TRUE)
+```
+
+## Introduction
+
+In class we engineered features to predict a car's fuel economy. Now you'll do it
+for something with higher stakes: **wages**.
+
+`Wage` (ISLR2) holds 3,000 workers from the mid-Atlantic region — their age,
+education, job class, and annual wage in thousands of dollars.
+
+Your job is to build features that predict `wage` better than the raw columns do,
+and — just as important — to **recognize when a feature doesn't help.**
+
+**Estimated time: 40 minutes.**
+
+Each task ends with a question in *italics*. Write a sentence; those are what
+we'll discuss.
+
+```{r load}
+data(Wage)
+glimpse(Wage)
+```
+
+---
+
+## Part 1: Establish a Baseline (8 minutes)
+
+You can't tell whether a feature helps unless you know what you're comparing to.
+
+### Task 1.1: The obvious predictor
+
+Older workers have more experience, so age should predict wage. Compute the
+correlation between `age` and `wage`, and the R-squared of `lm(wage ~ age)`.
+
+**Hint:** `summary(lm(...))$r.squared` gives you the number directly.
+
+```{r task1_1}
+# Your code here
+
+```
+
+*That R-squared is small. Before you look at any plots — give one reason age might
+be a weak predictor of wage on its own.*
+
+---
+
+## Part 2: Transform What You Have (10 minutes)
+
+### Task 2.1: Look at the shape
+
+Scatter plot of `age` (x) against `wage` (y). Add **two** smooth lines: a straight
+one (`method = "lm"`) and a flexible one (`method = "gam"`), in different colors.
+
+```{r task2_1, fig.width=8, fig.height=4}
+# Your code here
+
+```
+
+*Where does the straight line fit badly? What does the flexible line show that the
+straight line can't?*
+
+### Task 2.2: Give the model something that can bend
+
+Create `age2` (age squared), then fit `wage ~ age + age2`. Compare the R-squared
+to your baseline.
+
+```{r task2_2}
+# Your code here
+
+```
+
+*How much did R-squared improve? You collected no new data — where did the
+improvement come from?*
+
+---
+
+## Part 3: Turn a Category Into a Number (10 minutes)
+
+### Task 3.1: Build an indicator
+
+`education` has five levels. Create a binary `college` variable: **1** if the
+worker is a college graduate or has an advanced degree, **0** otherwise.
+
+**Hint:** `if_else()` plus the `%in%` operator. Run `levels(Wage$education)` to
+see the exact level names — they have number prefixes.
+
+```{r task3_1}
+# Your code here
+
+```
+
+### Task 3.2: Does it separate the data?
+
+Report the number of workers and the mean wage for each value of `college`.
+
+```{r task3_2}
+# Your code here
+
+```
+
+*How big is the gap in mean wage? Is it larger or smaller than you expected?*
+
+### Task 3.3: Add it to the model
+
+Fit `wage ~ age + age2 + college` and compare R-squared to Task 2.2.
+
+```{r task3_3}
+# Your code here
+
+```
+
+*Which bought you more: squaring age, or knowing whether someone went to college?*
+
+---
+
+## Part 4: Combine Features (10 minutes)
+
+### Task 4.1: A reasonable hypothesis
+
+Here's a plausible economic story: **college graduates' wages grow faster with
+age** than non-graduates' — their experience is worth more per year.
+
+If that's true, an interaction between `age` and `college` should help.
+
+First, check the story directly: fit `wage ~ age` **separately** for each group
+and compare the two slopes.
+
+```{r task4_1}
+# Your code here
+
+```
+
+### Task 4.2: Test the interaction
+
+Build `age_x_college`, then compare the R-squared of `wage ~ age + college` with
+and without it. (Leave out `age2` here to keep it simple.)
+
+```{r task4_2}
+# Your code here
+
+```
+
+*What happened to R-squared? Look at the two slopes from Task 4.1 — does the
+result make sense?*
+
+### Task 4.3: The important part
+
+You just built a feature with a sensible economic story behind it, and it did
+**not** help.
+
+*What do you do now — keep it, drop it, or keep looking? And what would have
+happened if you'd added it to a model without checking?*
+
+**Your answer:**
+
+---
+
+## Part 5: Build Your Own (bonus, if time)
+
+`Wage` has columns we haven't touched: `health_ins`, `jobclass`, `maritl`,
+`race`, `year`.
+
+Pick **one**, turn it into a feature you can justify, and test whether it improves
+on your Task 3.3 model.
+
+*State your reason for expecting it to help **before** you run the code. Then
+report whether you were right.*
+
+```{r task5}
+# Your code here
+
+```
+
+---
+
+## Wrap-up & Discussion (5 minutes)
+
+1. Rank the features you built today by how much they improved R-squared. Does
+   that ranking match how *interesting* they are economically?
+2. Task 4 gave a negative result. Why is it important to report those, rather than
+   quietly dropping the feature?
+3. Every feature today was built from columns already in the data. What's the
+   difference between that and just collecting more data?
+4. Suppose you kept inventing features — squares, cubes, products of every pair —
+   until R-squared hit 0.9. What would you be worried about?
